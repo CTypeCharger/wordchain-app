@@ -1218,7 +1218,7 @@ function AddWord({ onAdd }) {
     setAutoSearchFailed(false);
     
     try {
-      const response = await fetch('https://wordchain-app.vercel.app/api/scrape-dictionary', {
+      const response = await fetch('/api/scrape-dictionary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

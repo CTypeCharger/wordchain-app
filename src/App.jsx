@@ -1,4 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { 
+  registerUser, 
+  loginUser, 
+  logoutUser, 
+  saveUserData, 
+  getUserData, 
+  onAuthStateChange 
+} from "./firebaseService";
+import { auth } from "./firebase";
 
 /**
  * 영어 단어 체인 암기 웹앱 (Follow-Along)
@@ -31,76 +40,9 @@ const addDays = (d, n) => {
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 // ===== 사용자 관리 =====
-const getUsers = () => {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "{}");
-  } catch {
-    return {};
-  }
-};
+// Firebase 기반 사용자 관리로 대체됨
 
-const saveUsers = (users) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
-const getCurrentUser = () => {
-  return localStorage.getItem(CURRENT_USER_KEY) || null;
-};
-
-const setCurrentUser = (username) => {
-  if (username) {
-    localStorage.setItem(CURRENT_USER_KEY, username);
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
-  }
-};
-
-const getUserData = (username) => {
-  const users = getUsers();
-  return users[username] || { items: [], settings: { hideMeaningsByDefault: true } };
-};
-
-const saveUserData = (username, data) => {
-  const users = getUsers();
-  users[username] = data;
-  saveUsers(users);
-};
-
-const createUser = (username, password) => {
-  const users = getUsers();
-  if (users[username]) {
-    return { success: false, error: "사용자명이 이미 존재합니다" };
-  }
-  
-  users[username] = { 
-    items: [],
-    settings: { hideMeaningsByDefault: true },
-    createdAt: new Date().toISOString(),
-    password: password // 간단한 구현을 위해 평문 저장 (실제로는 해시해야 함)
-  };
-  saveUsers(users);
-  return { success: true };
-};
-
-const loginUser = (username, password) => {
-  const users = getUsers();
-  const user = users[username];
-  
-  if (!user) {
-    return { success: false, error: "사용자를 찾을 수 없습니다" };
-  }
-  
-  if (user.password !== password) {
-    return { success: false, error: "비밀번호가 올바르지 않습니다" };
-  }
-  
-  setCurrentUser(username);
-  return { success: true };
-};
-
-const logoutUser = () => {
-  setCurrentUser(null);
-};
+// Firebase 함수들은 import로 가져옴
 
 // ===== 데이터 관리 =====
 const clearAllUserData = () => {
@@ -148,13 +90,13 @@ const clearAllWords = () => {
 };
 
 const getUserCount = () => {
-  const users = getUsers();
-  return Object.keys(users).length;
+  // Firebase에서는 사용자 수를 직접 계산하기 어려우므로 임시로 0 반환
+  return 0;
 };
 
 const getTotalWordCount = () => {
-  const users = getUsers();
-  return Object.values(users).reduce((total, user) => total + (user.items?.length || 0), 0);
+  // Firebase에서는 전체 단어 수를 직접 계산하기 어려우므로 임시로 0 반환
+  return 0;
 };
 
 // ===== 관리자 인증 =====
@@ -181,9 +123,7 @@ const logoutAdmin = () => {
 
 function useLocalStore(currentUser) {
   const [data, setData] = useState(() => {
-    if (currentUser) {
-      return getUserData(currentUser);
-    }
+    // Firebase 사용자 데이터는 useEffect에서 로드됨
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw);
@@ -192,8 +132,8 @@ function useLocalStore(currentUser) {
   });
   
   useEffect(() => {
-    if (currentUser) {
-      saveUserData(currentUser, data);
+    if (currentUser && auth.currentUser) {
+      saveUserData(auth.currentUser.uid, data);
     } else {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
@@ -369,7 +309,7 @@ function AdminPanel({ onClose, onDataCleared, onLogout }) {
           onDataCleared("모든 단어가 삭제되었습니다");
           break;
         case "current":
-          clearCurrentUserData(getCurrentUser());
+          clearCurrentUserData(auth.currentUser?.uid);
           onDataCleared("현재 사용자의 단어가 삭제되었습니다");
           break;
       }
@@ -708,10 +648,10 @@ function PasswordRecoveryScreen({ onBack, onReset }) {
 }
 
 // ===== 로그인 컴포넌트 =====
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onRegister }) {
   const [mode, setMode] = useState("login"); // "login" | "register"
   const [showRecovery, setShowRecovery] = useState(false);
-  const [form, setForm] = useState({ username: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ email: "", username: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -727,18 +667,13 @@ function LoginScreen({ onLogin }) {
         return;
       }
       
-      const result = createUser(form.username, form.password);
-      if (result.success) {
-        setCurrentUser(form.username);
-        onLogin(form.username);
-      } else {
+      const result = await onRegister(form.email, form.password, form.username);
+      if (!result.success) {
         setError(result.error);
       }
     } else {
-      const result = loginUser(form.username, form.password);
-      if (result.success) {
-        onLogin(form.username);
-      } else {
+      const result = await onLogin(form.email, form.password);
+      if (!result.success) {
         setError(result.error);
       }
     }
@@ -775,16 +710,30 @@ function LoginScreen({ onLogin }) {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">사용자명</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
               <input
-                type="text"
+                type="email"
                 required
                 className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200"
-                value={form.username}
-                onChange={e => setForm({...form, username: e.target.value})}
-                placeholder="사용자명을 입력하세요"
+                value={form.email}
+                onChange={e => setForm({...form, email: e.target.value})}
+                placeholder="이메일을 입력하세요"
               />
             </div>
+            
+            {mode === "register" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">사용자명</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200"
+                  value={form.username}
+                  onChange={e => setForm({...form, username: e.target.value})}
+                  placeholder="사용자명을 입력하세요"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
@@ -868,21 +817,46 @@ export default function App() {
   // currentUser가 있을 때만 useLocalStore 사용
   const [store, setStore] = useLocalStore(currentUser);
 
-  // 사용자 로그인 상태 확인
+  // Firebase 인증 상태 확인
   useEffect(() => {
-    const user = getCurrentUser();
-    setCurrentUserState(user);
-    setIsAdminLoggedIn(checkAdminLoginStatus());
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChange((user) => {
+      if (user) {
+        setCurrentUserState(user.displayName || user.email);
+        // 사용자 데이터 로드
+        getUserData(user.uid).then(result => {
+          if (result.success) {
+            setStore(result.data);
+          }
+        });
+      } else {
+        setCurrentUserState(null);
+        setStore({ items: [], settings: { hideMeaningsByDefault: true } });
+      }
+      setIsAdminLoggedIn(checkAdminLoginStatus());
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleLogin = (username) => {
-    setCurrentUserState(username);
+  const handleLogin = async (email, password) => {
+    const result = await loginUser(email, password);
+    if (result.success) {
+      // Firebase auth state change가 자동으로 처리됨
+    }
+    return result;
   };
 
-  const handleLogout = () => {
-    logoutUser();
-    setCurrentUserState(null);
+  const handleRegister = async (email, password, username) => {
+    const result = await registerUser(email, password, username);
+    if (result.success) {
+      // Firebase auth state change가 자동으로 처리됨
+    }
+    return result;
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
     setTab("dashboard");
   };
 
@@ -932,7 +906,7 @@ export default function App() {
 
   // 로그인하지 않은 경우 로그인 화면 표시
   if (!currentUser) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />;
   }
 
   return (
@@ -943,11 +917,11 @@ export default function App() {
             <div className="w-10 h-10 flex items-center justify-center">
               <img src="/logo.png" alt="로고" className="w-full h-full object-contain" />
             </div>
-              <div>
+            <div>
                 <h1 className="text-2xl font-medium text-gray-900 whitespace-nowrap">
                   WordChain
                 </h1>
-              </div>
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -1006,7 +980,7 @@ export default function App() {
       <footer className="max-w-6xl mx-auto p-8 text-center">
         <div className="rounded-2xl bg-white/60 backdrop-blur-sm p-6 border border-white/20">
           <p className="text-sm text-gray-600 whitespace-nowrap">
-        © {new Date().getFullYear()} Follow‑Along · 로컬 저장 (브라우저 LocalStorage)
+        © {new Date().getFullYear()} WordChain · 클라우드 동기화 (Firebase)
           </p>
         </div>
       </footer>
@@ -1244,7 +1218,7 @@ function AddWord({ onAdd }) {
     setAutoSearchFailed(false);
     
     try {
-      const response = await fetch('/api/scrape-dictionary', {
+      const response = await fetch('https://wordchain-app.vercel.app/api/scrape-dictionary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

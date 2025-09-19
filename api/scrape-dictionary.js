@@ -52,9 +52,16 @@ module.exports = async function handler(req, res) {
     for (const selector of pronunciationSelectors) {
       const element = $(selector).first();
       if (element.length && element.text().trim()) {
-        pronunciation = element.text().trim();
+        pronunciation = element.html() || element.text().trim();
         break;
       }
+    }
+
+    // 발음에서 볼드체를 대문자로 변환
+    if (pronunciation) {
+      pronunciation = pronunciation.replace(/<b>(.*?)<\/b>/g, (match, content) => {
+        return `<b>${content.toUpperCase()}</b>`;
+      });
     }
 
     // 영영정의 추출 (여러 선택자 시도)
@@ -76,12 +83,40 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // 품사 추출
+    let partOfSpeech = '';
+    const partOfSpeechSelectors = [
+      "[data-testid='part-of-speech']",
+      ".luna-part-of-speech",
+      ".pos",
+      ".part-of-speech",
+      "h2"
+    ];
+
+    for (const selector of partOfSpeechSelectors) {
+      const element = $(selector).first();
+      if (element.length && element.text().trim()) {
+        const text = element.text().trim().toLowerCase();
+        if (text && !text.includes('pronunciation') && !text.includes('definition')) {
+          partOfSpeech = text;
+          break;
+        }
+      }
+    }
+
+    // 품사 필터링 (일반적인 품사만 허용)
+    const validPartsOfSpeech = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'interjection', 'pronoun', 'determiner'];
+    if (partOfSpeech && !validPartsOfSpeech.some(pos => partOfSpeech.includes(pos))) {
+      partOfSpeech = '';
+    }
+
     // 결과 반환
     const result = {
       success: true,
       data: {
         pronunciation: pronunciation || '',
         definition: definition || '',
+        partOfSpeech: partOfSpeech || '',
         source: 'Dictionary.com'
       }
     };

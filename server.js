@@ -172,6 +172,16 @@ app.post('/api/scrape-dictionary', async (req, res) => {
   }
 });
 
+// 전역 에러 핸들러
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({
+    success: false,
+    error: 'Internal Server Error',
+    details: err.message
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

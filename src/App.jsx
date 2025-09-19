@@ -1218,7 +1218,7 @@ function AddWord({ onAdd }) {
     setAutoSearchFailed(false);
     
     try {
-      const response = await fetch('https://engilsh-word-study-gqngezudw-ascertains-projects.vercel.app/api/scrape-dictionary', {
+      const response = await fetch('https://engilsh-word-study-4q0gfnpz2-ascertains-projects.vercel.app/api/scrape-dictionary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+const axios = require('axios');
+const cheerio = require('cheerio');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,18 +24,27 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log(`Scraping word: ${word}`);
+    
     // Dictionary.com에서 HTML 가져오기
     const response = await axios.get(`https://www.dictionary.com/browse/${encodeURIComponent(word)}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'no-cache'
       },
-      timeout: 10000
+      timeout: 15000,
+      maxRedirects: 5
     });
+    
+    console.log(`Response status: ${response.status}`);
 
     const $ = cheerio.load(response.data);
 

@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 전역 폰트 설정 */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* 코드 및 발음용 모노스페이스 폰트 */
+code, .font-mono, .pronunciation-display {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+}
+
+/* 발음 표시용 스타일 */
+.pronunciation-display b {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pronunciation-display i {
+  font-style: italic;
+  color: #6b7280;
+}
+
+.pronunciation-display span {
+  display: inline;
+}
+
+/* 제목 폰트 가중치 조정 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+/* 본문 텍스트 가독성 향상 */
+body {
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+

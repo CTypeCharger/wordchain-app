@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/scrape-dictionary.js": {
-      "runtime": "@vercel/node@3.0.7"
+      "runtime": "nodejs20.x"
     }
   }
 }

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { deviceAuth } from "./deviceAuth";
+import { anonymousAuth } from "./anonymousAuth";
 
 /**
- * 영어 단어 체인 암기 웹앱 (범기기 지원 버전)
- * - 로그인 없이 디바이스 지문으로 사용자 식별
- * - Firebase 클라우드 저장으로 어느 기기에서든 접근 가능
- * - 각 사용자는 고유한 디바이스 지문을 가짐
+ * 영어 단어 체인 암기 웹앱 (익명 사용자 버전)
+ * - 로그인 없이 익명 ID로 사용자 데이터 구분
+ * - 각 사용자는 고유한 익명 ID를 가짐
+ * - 브라우저별로 데이터가 분리되지만, 같은 브라우저에서는 지속됨
  */
 
 // ===== 유틸 =====
@@ -17,25 +17,29 @@ const addDays = (d, n) => {
 };
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-// ===== 범기기 사용자 데이터 관리 =====
-const useCrossDeviceStore = () => {
+// ===== 익명 사용자 데이터 관리 =====
+const useAnonymousStore = () => {
   const [items, setItems] = useState([]);
   const [settings, setSettings] = useState({ hideMeaningsByDefault: true });
-  const [userName, setUserName] = useState('익명 사용자');
   const [loading, setLoading] = useState(true);
-  const [deviceId, setDeviceId] = useState('');
 
-  // 사용자 데이터 로드
-  const loadUserData = async () => {
+  // 익명 사용자 데이터 로드
+  const loadUserData = () => {
     try {
-      setLoading(true);
-      const deviceId = deviceAuth.getDeviceId();
-      setDeviceId(deviceId);
+      const dataKey = anonymousAuth.getUserDataKey();
+      const settingsKey = anonymousAuth.getUserSettingsKey();
       
-      const userData = await deviceAuth.loadUserData();
-      setItems(userData.items || []);
-      setSettings(userData.settings || { hideMeaningsByDefault: true });
-      setUserName(userData.userName || '익명 사용자');
+      const savedData = localStorage.getItem(dataKey);
+      const savedSettings = localStorage.getItem(settingsKey);
+      
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        setItems(parsed.items || []);
+      }
+      
+      if (savedSettings) {
+        setSettings(JSON.parse(savedSettings));
+      }
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     } finally {
@@ -43,20 +47,14 @@ const useCrossDeviceStore = () => {
     }
   };
 
-  // 사용자 데이터 저장
-  const saveData = async (newItems, newSettings, newUserName) => {
+  // 익명 사용자 데이터 저장
+  const saveData = (newItems, newSettings) => {
     try {
-      const data = {
-        items: newItems,
-        settings: newSettings
-      };
+      const dataKey = anonymousAuth.getUserDataKey();
+      const settingsKey = anonymousAuth.getUserSettingsKey();
       
-      await deviceAuth.saveUserData(data);
-      
-      if (newUserName) {
-        deviceAuth.setUserName(newUserName);
-        setUserName(newUserName);
-      }
+      localStorage.setItem(dataKey, JSON.stringify({ items: newItems }));
+      localStorage.setItem(settingsKey, JSON.stringify(newSettings));
       
       setItems(newItems);
       setSettings(newSettings);
@@ -70,17 +68,7 @@ const useCrossDeviceStore = () => {
     loadUserData();
   }, []);
 
-  return { 
-    items, 
-    setItems, 
-    settings, 
-    setSettings, 
-    userName,
-    setUserName,
-    loading, 
-    saveData,
-    deviceId
-  };
+  return { items, setItems, settings, setSettings, loading, saveData };
 };
 
 // ===== 컴포넌트들 =====
@@ -97,7 +85,7 @@ const TabButton = ({ active, onClick, children, className = "" }) => (
   </button>
 );
 
-const Dashboard = ({ items, settings, deviceId }) => {
+const Dashboard = ({ items, settings }) => {
   const today = todayStr();
   
   const stats = useMemo(() => {
@@ -114,9 +102,6 @@ const Dashboard = ({ items, settings, deviceId }) => {
     <div className="pt-60 space-y-6">
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-xl">
         <h2 className="text-2xl font-bold mb-2">학습 현황</h2>
-        <div className="text-sm opacity-90 mb-4">
-          디바이스 ID: {deviceId?.substring(0, 12)}...
-        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold">{stats.total}</div>
@@ -168,13 +153,6 @@ const Dashboard = ({ items, settings, deviceId }) => {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="bg-green-50 border border-green-200 p-4 rounded-xl">
-        <h3 className="text-lg font-semibold text-green-800 mb-2">🌐 범기기 지원</h3>
-        <p className="text-green-700 text-sm">
-          이 디바이스에서 학습한 데이터는 클라우드에 저장되어 다른 기기에서도 동일하게 접근할 수 있습니다.
-        </p>
       </div>
     </div>
   );
@@ -261,6 +239,7 @@ const AddWord = ({ onAdd }) => {
 const Study = ({ items, settings, onUpdate }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
 
   const studyItems = items.filter(item => 
     item.status === 'new' || item.status === 'learning' || item.dueDate === todayStr()
@@ -292,9 +271,11 @@ const Study = ({ items, settings, onUpdate }) => {
         
         let newDueDate = item.dueDate;
         if (isCorrect) {
+          // 정답이면 다음 복습일을 연장
           const daysToAdd = Math.min(7, Math.pow(2, newReviewCount));
           newDueDate = addDays(todayStr(), daysToAdd);
         } else {
+          // 오답이면 내일 다시
           newDueDate = addDays(todayStr(), 1);
         }
 
@@ -311,6 +292,7 @@ const Study = ({ items, settings, onUpdate }) => {
 
     onUpdate(updatedItems);
     setShowAnswer(false);
+    setUserAnswer("");
     
     if (currentIndex < studyItems.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -444,51 +426,24 @@ const Review = ({ items, onUpdate }) => {
   );
 };
 
-const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange }) => {
+const Settings = ({ settings, onSettingsChange, onClearData }) => {
   const [showConfirm, setShowConfirm] = useState(false);
-  const [newUserName, setNewUserName] = useState(userName);
 
-  const handleClearData = async () => {
+  const handleClearData = () => {
     if (showConfirm) {
-      await deviceAuth.clearUserData();
+      anonymousAuth.clearUserData();
       window.location.reload();
     } else {
       setShowConfirm(true);
     }
   };
 
-  const handleUserNameChange = () => {
-    if (newUserName.trim()) {
-      onUserNameChange(newUserName.trim());
-    }
-  };
-
   return (
     <div className="pt-60 space-y-6">
       <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">사용자 설정</h2>
+        <h2 className="text-xl font-semibold mb-4">설정</h2>
         
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              사용자명
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleUserNameChange}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                변경
-              </button>
-            </div>
-          </div>
-          
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
               기본적으로 의미 숨기기
@@ -537,49 +492,39 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
 // ===== 메인 앱 =====
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [userName, setUserName] = useState("");
   const [showNameModal, setShowNameModal] = useState(false);
   
-  const { 
-    items, 
-    setItems, 
-    settings, 
-    setSettings, 
-    userName,
-    setUserName,
-    loading, 
-    saveData,
-    deviceId
-  } = useCrossDeviceStore();
+  const { items, setItems, settings, setSettings, loading, saveData } = useAnonymousStore();
 
   // 사용자명 설정
   useEffect(() => {
-    if (userName === '익명 사용자' && !loading) {
+    const savedName = anonymousAuth.getAnonymousName();
+    if (savedName === '익명 사용자') {
       setShowNameModal(true);
+    } else {
+      setUserName(savedName);
     }
-  }, [userName, loading]);
+  }, []);
 
   const handleNameSubmit = () => {
     if (userName.trim()) {
-      setUserName(userName.trim());
+      anonymousAuth.setAnonymousName(userName.trim());
       setShowNameModal(false);
     }
   };
 
-  const handleAddWord = async (newItem) => {
+  const handleAddWord = (newItem) => {
     const newItems = [...items, newItem];
-    await saveData(newItems, settings);
+    saveData(newItems, settings);
   };
 
-  const handleUpdateItems = async (newItems) => {
-    await saveData(newItems, settings);
+  const handleUpdateItems = (newItems) => {
+    saveData(newItems, settings);
   };
 
-  const handleSettingsChange = async (newSettings) => {
-    await saveData(items, newSettings);
-  };
-
-  const handleUserNameChange = async (newUserName) => {
-    await saveData(items, settings, newUserName);
+  const handleSettingsChange = (newSettings) => {
+    saveData(items, newSettings);
   };
 
   if (loading) {
@@ -587,7 +532,7 @@ const App = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">데이터 로딩 중...</p>
+          <p className="text-gray-600">로딩 중...</p>
         </div>
       </div>
     );
@@ -687,7 +632,7 @@ const App = () => {
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} deviceId={deviceId} />}
+        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} />}
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
@@ -696,8 +641,6 @@ const App = () => {
             settings={settings} 
             onSettingsChange={handleSettingsChange}
             onClearData={() => {}}
-            userName={userName}
-            onUserNameChange={handleUserNameChange}
           />
         )}
       </main>
@@ -706,7 +649,7 @@ const App = () => {
       <footer className="bg-white border-t mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-500">
-            © 2025 WordChain · 범기기 지원 (클라우드 동기화)
+            © 2025 WordChain · 익명 사용자 모드 (로컬 저장)
           </p>
         </div>
       </footer>

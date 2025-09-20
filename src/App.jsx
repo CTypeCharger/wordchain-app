@@ -388,6 +388,183 @@ const Study = ({ items, settings, onUpdate }) => {
   );
 };
 
+const WordList = ({ items, onUpdate }) => {
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.definition.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    switch (filter) {
+      case 'new':
+        return item.status === 'new' && matchesSearch;
+      case 'learning':
+        return item.status === 'learning' && matchesSearch;
+      case 'mastered':
+        return item.status === 'mastered' && matchesSearch;
+      case 'due':
+        return item.dueDate === todayStr() && matchesSearch;
+      default:
+        return matchesSearch;
+    }
+  });
+
+  const handleDeleteWord = (wordId) => {
+    if (window.confirm('이 단어를 삭제하시겠습니까?')) {
+      const updatedItems = items.filter(item => item.id !== wordId);
+      onUpdate(updatedItems);
+    }
+  };
+
+  const handleStatusChange = (wordId, newStatus) => {
+    const updatedItems = items.map(item => 
+      item.id === wordId ? { ...item, status: newStatus } : item
+    );
+    onUpdate(updatedItems);
+  };
+
+  return (
+    <div className="pt-60 space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h2 className="text-xl font-semibold mb-4">전체 단어 목록 ({items.length}개)</h2>
+        
+        {/* 검색 및 필터 */}
+        <div className="space-y-4 mb-6">
+          <div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="단어나 정의로 검색..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'all' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              전체 ({items.length})
+            </button>
+            <button
+              onClick={() => setFilter('new')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'new' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              새 단어 ({items.filter(item => item.status === 'new').length})
+            </button>
+            <button
+              onClick={() => setFilter('learning')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'learning' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              학습 중 ({items.filter(item => item.status === 'learning').length})
+            </button>
+            <button
+              onClick={() => setFilter('mastered')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'mastered' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              완료 ({items.filter(item => item.status === 'mastered').length})
+            </button>
+            <button
+              onClick={() => setFilter('due')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'due' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              오늘 복습 ({items.filter(item => item.dueDate === todayStr()).length})
+            </button>
+          </div>
+        </div>
+
+        {/* 단어 목록 */}
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {searchTerm ? '검색 결과가 없습니다.' : '등록된 단어가 없습니다.'}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredItems.map(item => (
+              <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{item.word}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        item.status === 'new' ? 'bg-blue-100 text-blue-700' :
+                        item.status === 'learning' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {item.status === 'new' ? '새 단어' :
+                         item.status === 'learning' ? '학습 중' : '완료'}
+                      </span>
+                    </div>
+                    
+                    {item.pronunciation && (
+                      <p 
+                        className="text-gray-600 mb-2 pronunciation-display"
+                        dangerouslySetInnerHTML={{ __html: item.pronunciation }}
+                      />
+                    )}
+                    
+                    <p className="text-gray-700 mb-2">{item.definition}</p>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      {item.partOfSpeech && (
+                        <span>({item.partOfSpeech})</span>
+                      )}
+                      <span>추가일: {item.addedDate}</span>
+                      <span>복습일: {item.dueDate}</span>
+                      <span>복습 횟수: {item.reviewCount}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 ml-4">
+                    <select
+                      value={item.status}
+                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                      className="text-xs px-2 py-1 border border-gray-300 rounded"
+                    >
+                      <option value="new">새 단어</option>
+                      <option value="learning">학습 중</option>
+                      <option value="mastered">완료</option>
+                    </select>
+                    
+                    <button
+                      onClick={() => handleDeleteWord(item.id)}
+                      className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Review = ({ items, onUpdate }) => {
   const today = todayStr();
   const dueItems = items.filter(item => item.dueDate === today);
@@ -678,6 +855,12 @@ const App = () => {
                   리뷰
                 </TabButton>
                 <TabButton
+                  active={activeTab === "words"}
+                  onClick={() => setActiveTab("words")}
+                >
+                  단어목록
+                </TabButton>
+                <TabButton
                   active={activeTab === "settings"}
                   onClick={() => setActiveTab("settings")}
                 >
@@ -701,6 +884,7 @@ const App = () => {
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
+        {activeTab === "words" && <WordList items={items} onUpdate={handleUpdateItems} />}
         {activeTab === "settings" && (
           <Settings 
             settings={settings} 

@@ -85,6 +85,15 @@ export class DeviceAuth {
     return localStorage.getItem(this.USER_NAME_KEY) || '익명 사용자';
   }
 
+  // 디바이스 ID 설정 (다른 기기에서 사용)
+  setDeviceId(deviceId) {
+    if (!deviceId || deviceId.trim() === '') {
+      throw new Error('유효한 디바이스 ID를 입력해주세요.');
+    }
+    localStorage.setItem(this.DEVICE_ID_KEY, deviceId.trim());
+    return true;
+  }
+
   // 사용자 데이터 저장
   async saveUserData(data) {
     try {

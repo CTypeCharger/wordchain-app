@@ -15,9 +15,16 @@ code, .font-mono, .pronunciation-display {
 }
 
 /* 발음 표시용 스타일 */
-.pronunciation-display b {
+.pronunciation-display b,
+.pronunciation-display strong {
   font-weight: 600;
   color: #1f2937;
+  font-size: 1.1em;
+}
+
+.pronunciation-display span {
+  font-style: italic;
+  color: #6b7280;
 }
 
 .pronunciation-display i {

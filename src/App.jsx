@@ -333,9 +333,10 @@ const Study = ({ items, settings, onUpdate }) => {
             {currentItem.word}
           </h2>
           {currentItem.pronunciation && (
-            <p className="text-lg text-gray-600 mb-4">
-              {currentItem.pronunciation}
-            </p>
+            <p 
+              className="text-lg text-gray-600 mb-4 pronunciation-display"
+              dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+            />
           )}
         </div>
 
@@ -350,15 +351,21 @@ const Study = ({ items, settings, onUpdate }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">정의:</h3>
-              <p className="text-gray-700">{currentItem.definition}</p>
-              {currentItem.partOfSpeech && (
-                <p className="text-sm text-gray-500 mt-2">
-                  ({currentItem.partOfSpeech})
-                </p>
-              )}
-            </div>
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="font-semibold mb-2">정의:</h3>
+          <p className="text-gray-700">{currentItem.definition}</p>
+          {currentItem.pronunciation && (
+            <p 
+              className="text-sm text-gray-600 mt-2 pronunciation-display"
+              dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+            />
+          )}
+          {currentItem.partOfSpeech && (
+            <p className="text-sm text-gray-500 mt-2">
+              ({currentItem.partOfSpeech})
+            </p>
+          )}
+        </div>
             
             <div className="flex space-x-4">
               <button
@@ -407,7 +414,10 @@ const Review = ({ items, onUpdate }) => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{item.word}</h3>
                   {item.pronunciation && (
-                    <p className="text-gray-600">{item.pronunciation}</p>
+                    <p 
+                      className="text-gray-600 pronunciation-display"
+                      dangerouslySetInnerHTML={{ __html: item.pronunciation }}
+                    />
                   )}
                   <p className="text-gray-700 mt-2">{item.definition}</p>
                 </div>

@@ -17,6 +17,30 @@ const addDays = (d, n) => {
 };
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+// ===== 발음 기능 =====
+const speakText = (text, lang = 'en-US') => {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.8; // 조금 느리게
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // 영어 음성으로 설정
+    const voices = speechSynthesis.getVoices();
+    const englishVoice = voices.find(voice => 
+      voice.lang.startsWith('en') && voice.name.includes('English')
+    );
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+    
+    speechSynthesis.speak(utterance);
+  } else {
+    alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+  }
+};
+
 // ===== 범기기 사용자 데이터 관리 =====
 const useCrossDeviceStore = () => {
   const [items, setItems] = useState([]);
@@ -236,14 +260,28 @@ const AddWord = ({ onAdd }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               영어 단어
             </label>
-            <input
-              type="text"
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              placeholder="단어를 입력하세요"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={loading}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                placeholder="단어를 입력하세요"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={loading}
+              />
+              {word.trim() && (
+                <button
+                  type="button"
+                  onClick={() => speakText(word.trim())}
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  disabled={loading}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           <button
             type="submit"
@@ -333,10 +371,21 @@ const Study = ({ items, settings, onUpdate }) => {
             {currentItem.word}
           </h2>
           {currentItem.pronunciation && (
-            <p 
-              className="text-lg text-gray-600 mb-4 pronunciation-display"
-              dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
-            />
+            <div className="mb-4">
+              <p 
+                className="text-lg text-gray-600 mb-2 pronunciation-display"
+                dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+              />
+              <button
+                onClick={() => speakText(currentItem.word)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                </svg>
+                발음 듣기
+              </button>
+            </div>
           )}
         </div>
 
@@ -355,10 +404,21 @@ const Study = ({ items, settings, onUpdate }) => {
           <h3 className="font-semibold mb-2">정의:</h3>
           <p className="text-gray-700">{currentItem.definition}</p>
           {currentItem.pronunciation && (
-            <p 
-              className="text-sm text-gray-600 mt-2 pronunciation-display"
-              dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
-            />
+            <div className="mt-2">
+              <p 
+                className="text-sm text-gray-600 mb-2 pronunciation-display"
+                dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+              />
+              <button
+                onClick={() => speakText(currentItem.word)}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition-colors"
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                </svg>
+                발음 듣기
+              </button>
+            </div>
           )}
           {currentItem.partOfSpeech && (
             <p className="text-sm text-gray-500 mt-2">
@@ -519,10 +579,21 @@ const WordList = ({ items, onUpdate }) => {
                     </div>
                     
                     {item.pronunciation && (
-                      <p 
-                        className="text-gray-600 mb-2 pronunciation-display"
-                        dangerouslySetInnerHTML={{ __html: item.pronunciation }}
-                      />
+                      <div className="mb-2">
+                        <p 
+                          className="text-gray-600 mb-1 pronunciation-display"
+                          dangerouslySetInnerHTML={{ __html: item.pronunciation }}
+                        />
+                        <button
+                          onClick={() => speakText(item.word)}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                          </svg>
+                          발음
+                        </button>
+                      </div>
                     )}
                     
                     <p className="text-gray-700 mb-2">{item.definition}</p>

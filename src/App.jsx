@@ -860,7 +860,6 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
           </div>
         </div>
       </div>
-      </div>
 
       <div className="bg-red-50 border border-red-200 p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-red-800 mb-2">데이터 관리</h3>

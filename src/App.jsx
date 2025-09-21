@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { deviceAuth } from "./deviceAuth";
 
 /**
- * 영어 단어 체인 암기 웹앱 (범기기 지원 버전)
- * - 로그인 없이 디바이스 지문으로 사용자 식별
- * - Firebase 클라우드 저장으로 어느 기기에서든 접근 가능
- * - 각 사용자는 고유한 디바이스 지문을 가짐
+ * 영어 단어 체인 암기 웹앱
+ * - 로컬 저장소를 사용한 데이터 관리
+ * - JSON 백업/복원 기능 제공
  */
 
 // ===== 유틸 =====
@@ -41,7 +40,7 @@ const speakText = (text, lang = 'en-US') => {
   }
 };
 
-// ===== 범기기 사용자 데이터 관리 =====
+// ===== 사용자 데이터 관리 =====
 const useCrossDeviceStore = () => {
   const [items, setItems] = useState([]);
   const [settings, setSettings] = useState({ hideMeaningsByDefault: true });
@@ -121,7 +120,7 @@ const TabButton = ({ active, onClick, children, className = "" }) => (
   </button>
 );
 
-const Dashboard = ({ items, settings, deviceId }) => {
+const Dashboard = ({ items, settings }) => {
   const today = todayStr();
   
   const stats = useMemo(() => {
@@ -138,9 +137,6 @@ const Dashboard = ({ items, settings, deviceId }) => {
     <div className="pt-60 space-y-6">
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-xl">
         <h2 className="text-2xl font-bold mb-2">학습 현황</h2>
-        <div className="text-sm opacity-90 mb-4">
-          디바이스 ID: {deviceId?.substring(0, 12)}...
-        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold">{stats.total}</div>
@@ -194,10 +190,10 @@ const Dashboard = ({ items, settings, deviceId }) => {
         </div>
       </div>
 
-      <div className="bg-green-50 border border-green-200 p-4 rounded-xl">
-        <h3 className="text-lg font-semibold text-green-800 mb-2">🌐 범기기 지원</h3>
-        <p className="text-green-700 text-sm">
-          이 디바이스에서 학습한 데이터는 클라우드에 저장되어 다른 기기에서도 동일하게 접근할 수 있습니다.
+      <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">💾 데이터 백업</h3>
+        <p className="text-blue-700 text-sm">
+          설정에서 데이터를 JSON 파일로 백업하거나 복원할 수 있습니다.
         </p>
       </div>
     </div>
@@ -702,15 +698,16 @@ const Review = ({ items, onUpdate }) => {
   );
 };
 
-const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange, deviceId }) => {
+const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange, items }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [newUserName, setNewUserName] = useState(userName);
-  const [showDeviceIdInput, setShowDeviceIdInput] = useState(false);
-  const [inputDeviceId, setInputDeviceId] = useState('');
+  const [showBackupRestore, setShowBackupRestore] = useState(false);
 
   const handleClearData = async () => {
     if (showConfirm) {
-      await deviceAuth.clearUserData();
+      localStorage.removeItem('wordchain_items');
+      localStorage.removeItem('wordchain_settings');
+      localStorage.removeItem('wordchain_user_name');
       window.location.reload();
     } else {
       setShowConfirm(true);
@@ -723,22 +720,67 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
     }
   };
 
-  const copyDeviceId = () => {
-    navigator.clipboard.writeText(deviceId).then(() => {
-      alert('디바이스 ID가 복사되었습니다!');
-    });
+  // JSON 백업 다운로드
+  const handleBackup = () => {
+    const data = {
+      items: items,
+      settings: settings,
+      userName: userName,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `wordchain-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    alert('백업 파일이 다운로드되었습니다!');
   };
 
-  const handleDeviceIdChange = async () => {
-    if (inputDeviceId.trim()) {
+  // JSON 복원
+  const handleRestore = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
       try {
-        await deviceAuth.setDeviceId(inputDeviceId.trim());
-        alert('디바이스 ID가 변경되었습니다. 페이지를 새로고침합니다.');
+        const data = JSON.parse(e.target.result);
+        
+        // 데이터 검증
+        if (!data.items || !Array.isArray(data.items)) {
+          throw new Error('잘못된 백업 파일입니다. items 배열이 없습니다.');
+        }
+        
+        if (!data.settings || typeof data.settings !== 'object') {
+          throw new Error('잘못된 백업 파일입니다. settings 객체가 없습니다.');
+        }
+
+        // 데이터 복원
+        localStorage.setItem('wordchain_items', JSON.stringify(data.items));
+        localStorage.setItem('wordchain_settings', JSON.stringify(data.settings));
+        if (data.userName) {
+          localStorage.setItem('wordchain_user_name', data.userName);
+        }
+        
+        alert('백업이 성공적으로 복원되었습니다! 페이지를 새로고침합니다.');
         window.location.reload();
       } catch (error) {
-        alert('디바이스 ID 변경에 실패했습니다: ' + error.message);
+        alert('백업 복원에 실패했습니다: ' + error.message);
       }
-    }
+    };
+    reader.readAsText(file);
+    
+    // 파일 입력 초기화
+    event.target.value = '';
   };
 
   return (
@@ -747,65 +789,6 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
         <h2 className="text-xl font-semibold mb-4">사용자 설정</h2>
         
         <div className="space-y-4">
-          {/* 디바이스 ID 공유 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              디바이스 ID (다른 기기에서 같은 데이터 사용)
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={deviceId}
-                readOnly
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
-              />
-              <button
-                onClick={copyDeviceId}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                복사
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              이 ID를 다른 기기에서 입력하면 같은 데이터를 사용할 수 있습니다.
-            </p>
-            
-            <div className="mt-3">
-              <button
-                onClick={() => setShowDeviceIdInput(!showDeviceIdInput)}
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
-              >
-                {showDeviceIdInput ? '숨기기' : '다른 기기 ID 입력하기'}
-              </button>
-              
-              {showDeviceIdInput && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    다른 기기의 디바이스 ID 입력
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={inputDeviceId}
-                      onChange={(e) => setInputDeviceId(e.target.value)}
-                      placeholder="디바이스 ID를 입력하세요"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
-                    />
-                    <button
-                      onClick={handleDeviceIdChange}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      적용
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    주의: 기존 데이터는 새 디바이스의 데이터로 덮어씌워집니다.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               사용자명
@@ -841,6 +824,42 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
             />
           </div>
         </div>
+      </div>
+
+      {/* 백업 및 복원 */}
+      <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl">
+        <h3 className="text-lg font-semibold text-blue-800 mb-2">데이터 백업 및 복원</h3>
+        <p className="text-blue-600 mb-4">
+          학습 데이터를 JSON 파일로 백업하거나 복원할 수 있습니다.
+        </p>
+        
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <button
+              onClick={handleBackup}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              📥 데이터 백업
+            </button>
+            
+            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+              📤 데이터 복원
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleRestore}
+                className="hidden"
+              />
+            </label>
+          </div>
+          
+          <div className="text-sm text-blue-600">
+            <p>• 백업: 현재 모든 데이터를 JSON 파일로 다운로드합니다</p>
+            <p>• 복원: 백업 파일을 선택하여 데이터를 복원합니다</p>
+            <p>• 복원 시 기존 데이터는 덮어씌워집니다</p>
+          </div>
+        </div>
+      </div>
       </div>
 
       <div className="bg-red-50 border border-red-200 p-6 rounded-xl">
@@ -1033,7 +1052,7 @@ const App = () => {
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} deviceId={deviceId} />}
+        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} />}
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
@@ -1045,7 +1064,7 @@ const App = () => {
             onClearData={() => {}}
             userName={userName}
             onUserNameChange={handleUserNameChange}
-            deviceId={deviceId}
+            items={items}
           />
         )}
       </main>
@@ -1054,7 +1073,7 @@ const App = () => {
       <footer className="bg-white border-t mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-500">
-            © 2025 WordChain · 범기기 지원 (클라우드 동기화)
+            © 2025 WordChain · JSON 백업/복원 지원
           </p>
         </div>
       </footer>

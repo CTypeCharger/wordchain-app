@@ -134,25 +134,25 @@ const Dashboard = ({ items, settings }) => {
   }, [items, today]);
 
   return (
-    <div className="pt-60 space-y-6">
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-xl">
-        <h2 className="text-2xl font-bold mb-2">학습 현황</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="pt-4 md:pt-60 space-y-6">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 md:p-6 rounded-xl">
+        <h2 className="text-xl md:text-2xl font-bold mb-2">학습 현황</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div className="text-center">
-            <div className="text-3xl font-bold">{stats.total}</div>
-            <div className="text-sm opacity-90">전체 단어</div>
+            <div className="text-2xl md:text-3xl font-bold">{stats.total}</div>
+            <div className="text-xs md:text-sm opacity-90">전체 단어</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-300">{stats.dueToday}</div>
-            <div className="text-sm opacity-90">오늘 복습</div>
+            <div className="text-2xl md:text-3xl font-bold text-yellow-300">{stats.dueToday}</div>
+            <div className="text-xs md:text-sm opacity-90">오늘 복습</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-300">{stats.learning}</div>
-            <div className="text-sm opacity-90">학습 중</div>
+            <div className="text-2xl md:text-3xl font-bold text-green-300">{stats.learning}</div>
+            <div className="text-xs md:text-sm opacity-90">학습 중</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-300">{stats.mastered}</div>
-            <div className="text-sm opacity-90">완료</div>
+            <div className="text-2xl md:text-3xl font-bold text-blue-300">{stats.mastered}</div>
+            <div className="text-xs md:text-sm opacity-90">완료</div>
           </div>
         </div>
       </div>
@@ -248,9 +248,9 @@ const AddWord = ({ onAdd }) => {
   };
 
   return (
-    <div className="pt-60 space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">새 단어 추가</h2>
+    <div className="pt-4 md:pt-60 space-y-6">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">새 단어 추가</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -302,9 +302,9 @@ const Study = ({ items, settings, onUpdate }) => {
 
   if (studyItems.length === 0) {
     return (
-      <div className="pt-60 text-center">
-        <h2 className="text-xl font-semibold text-gray-600">학습할 단어가 없습니다</h2>
-        <p className="text-gray-500 mt-2">새 단어를 추가하거나 복습할 단어가 생기면 여기에 표시됩니다.</p>
+      <div className="pt-4 md:pt-60 text-center">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-600">학습할 단어가 없습니다</h2>
+        <p className="text-gray-500 mt-2 text-sm md:text-base">새 단어를 추가하거나 복습할 단어가 생기면 여기에 표시됩니다.</p>
       </div>
     );
   }
@@ -354,27 +354,27 @@ const Study = ({ items, settings, onUpdate }) => {
   };
 
   return (
-    <div className="pt-60 space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow">
+    <div className="pt-4 md:pt-60 space-y-6">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
         <div className="text-center mb-4">
-          <span className="text-sm text-gray-500">
+          <span className="text-xs md:text-sm text-gray-500">
             {currentIndex + 1} / {studyItems.length}
           </span>
         </div>
         
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
             {currentItem.word}
           </h2>
           {currentItem.pronunciation && (
             <div className="mb-4">
               <p 
-                className="text-lg text-gray-600 mb-2 pronunciation-display"
+                className="text-base md:text-lg text-gray-600 mb-2 pronunciation-display"
                 dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
               />
               <button
                 onClick={() => speakText(currentItem.word)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm md:text-base"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
@@ -389,7 +389,7 @@ const Study = ({ items, settings, onUpdate }) => {
           <div className="space-y-4">
             <button
               onClick={() => setShowAnswer(true)}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white py-3 px-4 md:px-6 rounded-lg hover:bg-blue-700 text-sm md:text-base"
             >
               답 보기
             </button>
@@ -423,16 +423,16 @@ const Study = ({ items, settings, onUpdate }) => {
           )}
         </div>
             
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <button
                 onClick={() => handleAnswer(false)}
-                className="flex-1 bg-red-500 text-white py-3 px-6 rounded-lg hover:bg-red-600"
+                className="flex-1 bg-red-500 text-white py-3 px-4 md:px-6 rounded-lg hover:bg-red-600 text-sm md:text-base"
               >
                 틀렸어요
               </button>
               <button
                 onClick={() => handleAnswer(true)}
-                className="flex-1 bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600"
+                className="flex-1 bg-green-500 text-white py-3 px-4 md:px-6 rounded-lg hover:bg-green-600 text-sm md:text-base"
               >
                 맞았어요
               </button>
@@ -481,9 +481,9 @@ const WordList = ({ items, onUpdate }) => {
   };
 
   return (
-    <div className="pt-60 space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">전체 단어 목록 ({items.length}개)</h2>
+    <div className="pt-4 md:pt-60 space-y-6">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">전체 단어 목록 ({items.length}개)</h2>
         
         {/* 검색 및 필터 */}
         <div className="space-y-4 mb-6">
@@ -500,7 +500,7 @@ const WordList = ({ items, onUpdate }) => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm ${
                 filter === 'all' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -510,7 +510,7 @@ const WordList = ({ items, onUpdate }) => {
             </button>
             <button
               onClick={() => setFilter('new')}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm ${
                 filter === 'new' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -520,7 +520,7 @@ const WordList = ({ items, onUpdate }) => {
             </button>
             <button
               onClick={() => setFilter('learning')}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm ${
                 filter === 'learning' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -530,7 +530,7 @@ const WordList = ({ items, onUpdate }) => {
             </button>
             <button
               onClick={() => setFilter('mastered')}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm ${
                 filter === 'mastered' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -540,7 +540,7 @@ const WordList = ({ items, onUpdate }) => {
             </button>
             <button
               onClick={() => setFilter('due')}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm ${
                 filter === 'due' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -784,9 +784,9 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
   };
 
   return (
-    <div className="pt-60 space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-4">사용자 설정</h2>
+    <div className="pt-4 md:pt-60 space-y-6">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">사용자 설정</h2>
         
         <div className="space-y-4">
           <div>
@@ -802,7 +802,7 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
               />
               <button
                 onClick={handleUserNameChange}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm md:text-base"
               >
                 변경
               </button>
@@ -827,22 +827,22 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
       </div>
 
       {/* 백업 및 복원 */}
-      <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">데이터 백업 및 복원</h3>
-        <p className="text-blue-600 mb-4">
+      <div className="bg-blue-50 border border-blue-200 p-4 md:p-6 rounded-xl">
+        <h3 className="text-base md:text-lg font-semibold text-blue-800 mb-2">데이터 백업 및 복원</h3>
+        <p className="text-blue-600 mb-4 text-sm md:text-base">
           학습 데이터를 JSON 파일로 백업하거나 복원할 수 있습니다.
         </p>
         
         <div className="space-y-4">
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleBackup}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm md:text-base"
             >
               📥 데이터 백업
             </button>
             
-            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+            <label className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-sm md:text-base text-center">
               📤 데이터 복원
               <input
                 type="file"
@@ -853,7 +853,7 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
             </label>
           </div>
           
-          <div className="text-sm text-blue-600">
+          <div className="text-xs md:text-sm text-blue-600">
             <p>• 백업: 현재 모든 데이터를 JSON 파일로 다운로드합니다</p>
             <p>• 복원: 백업 파일을 선택하여 데이터를 복원합니다</p>
             <p>• 복원 시 기존 데이터는 덮어씌워집니다</p>
@@ -861,14 +861,14 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
         </div>
       </div>
 
-      <div className="bg-red-50 border border-red-200 p-6 rounded-xl">
-        <h3 className="text-lg font-semibold text-red-800 mb-2">데이터 관리</h3>
-        <p className="text-red-600 mb-4">
+      <div className="bg-red-50 border border-red-200 p-4 md:p-6 rounded-xl">
+        <h3 className="text-base md:text-lg font-semibold text-red-800 mb-2">데이터 관리</h3>
+        <p className="text-red-600 mb-4 text-sm md:text-base">
           모든 학습 데이터를 삭제합니다. 이 작업은 되돌릴 수 없습니다.
         </p>
         <button
           onClick={handleClearData}
-          className={`px-4 py-2 rounded-lg font-medium ${
+          className={`px-3 md:px-4 py-2 rounded-lg font-medium text-sm md:text-base ${
             showConfirm 
               ? 'bg-red-600 text-white hover:bg-red-700' 
               : 'bg-red-100 text-red-700 hover:bg-red-200'
@@ -879,7 +879,7 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
         {showConfirm && (
           <button
             onClick={() => setShowConfirm(false)}
-            className="ml-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="ml-2 px-3 md:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm md:text-base"
           >
             취소
           </button>
@@ -893,6 +893,7 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
 const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showNameModal, setShowNameModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const { 
     items, 
@@ -984,73 +985,155 @@ const App = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <div 
-                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            {/* 로고 */}
+            <div 
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setActiveTab("dashboard")}
+            >
+              <img 
+                src="/logo.png" 
+                alt="WordChain" 
+                className="h-8 w-8"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <h1 className="text-xl font-bold text-gray-900">WordChain</h1>
+            </div>
+            
+            {/* 데스크톱 네비게이션 */}
+            <nav className="hidden md:flex space-x-1">
+              <TabButton
+                active={activeTab === "dashboard"}
                 onClick={() => setActiveTab("dashboard")}
               >
-                <img 
-                  src="/logo.png" 
-                  alt="WordChain" 
-                  className="h-8 w-8"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <h1 className="text-xl font-bold text-gray-900">WordChain</h1>
-              </div>
-              
-              <nav className="flex space-x-1">
+                대시보드
+              </TabButton>
+              <TabButton
+                active={activeTab === "add"}
+                onClick={() => setActiveTab("add")}
+              >
+                추가
+              </TabButton>
+              <TabButton
+                active={activeTab === "study"}
+                onClick={() => setActiveTab("study")}
+              >
+                학습
+              </TabButton>
+              <TabButton
+                active={activeTab === "review"}
+                onClick={() => setActiveTab("review")}
+              >
+                리뷰
+              </TabButton>
+              <TabButton
+                active={activeTab === "words"}
+                onClick={() => setActiveTab("words")}
+              >
+                단어목록
+              </TabButton>
+              <TabButton
+                active={activeTab === "settings"}
+                onClick={() => setActiveTab("settings")}
+              >
+                설정
+              </TabButton>
+            </nav>
+            
+            {/* 사용자명 (데스크톱) */}
+            <div className="hidden sm:flex items-center gap-4">
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                안녕하세요, {userName}님!
+              </span>
+            </div>
+            
+            {/* 모바일 메뉴 버튼 */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* 모바일 메뉴 */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 py-4">
+              <div className="space-y-2">
+                <div className="px-2 py-1 text-sm text-gray-600">
+                  안녕하세요, {userName}님!
+                </div>
                 <TabButton
                   active={activeTab === "dashboard"}
-                  onClick={() => setActiveTab("dashboard")}
+                  onClick={() => {
+                    setActiveTab("dashboard");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   대시보드
                 </TabButton>
                 <TabButton
                   active={activeTab === "add"}
-                  onClick={() => setActiveTab("add")}
+                  onClick={() => {
+                    setActiveTab("add");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   추가
                 </TabButton>
                 <TabButton
                   active={activeTab === "study"}
-                  onClick={() => setActiveTab("study")}
+                  onClick={() => {
+                    setActiveTab("study");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   학습
                 </TabButton>
                 <TabButton
                   active={activeTab === "review"}
-                  onClick={() => setActiveTab("review")}
+                  onClick={() => {
+                    setActiveTab("review");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   리뷰
                 </TabButton>
                 <TabButton
                   active={activeTab === "words"}
-                  onClick={() => setActiveTab("words")}
+                  onClick={() => {
+                    setActiveTab("words");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   단어목록
                 </TabButton>
                 <TabButton
                   active={activeTab === "settings"}
-                  onClick={() => setActiveTab("settings")}
+                  onClick={() => {
+                    setActiveTab("settings");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start"
                 >
                   설정
                 </TabButton>
-              </nav>
+              </div>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 whitespace-nowrap">
-                안녕하세요, {userName}님!
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </header>
 
       {/* 메인 컨텐츠 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
         {activeTab === "dashboard" && <Dashboard items={items} settings={settings} />}
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}

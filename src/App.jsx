@@ -135,6 +135,7 @@ const Dashboard = ({ items, settings }) => {
 
   return (
     <div className="pt-4 md:pt-60 space-y-6">
+      <PWAInstallPrompt />
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 md:p-6 rounded-xl">
         <h2 className="text-xl md:text-2xl font-bold mb-2">학습 현황</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -884,6 +885,66 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
             취소
           </button>
         )}
+      </div>
+    </div>
+  );
+};
+
+// ===== PWA 설치 안내 컴포넌트 =====
+const PWAInstallPrompt = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
+  };
+
+  if (!showInstallPrompt) return null;
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="text-2xl">📱</div>
+          <div>
+            <h3 className="font-semibold text-blue-800">앱으로 설치하기</h3>
+            <p className="text-sm text-blue-600">홈 화면에 추가하여 앱처럼 사용하세요!</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleInstallClick}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          >
+            설치
+          </button>
+          <button
+            onClick={() => setShowInstallPrompt(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+          >
+            나중에
+          </button>
+        </div>
       </div>
     </div>
   );

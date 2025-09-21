@@ -911,18 +911,25 @@ const PWAInstallPrompt = () => {
     // 모바일 감지
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // PWA 설치 지원 여부 확인
-    const isInstallSupported = 'serviceWorker' in navigator && 
-                              ('PushManager' in window || 'Notification' in window);
+    // PWA 설치 지원 여부 확인 (더 유연한 조건)
+    const hasServiceWorker = 'serviceWorker' in navigator;
+    const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
+    const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+    const isInstallSupported = hasServiceWorker && hasManifest && isHTTPS;
 
     console.log('PWA Debug Info:', {
       iOS,
       standalone,
       isMobile,
       isInstallSupported,
+      hasServiceWorker,
+      hasManifest,
+      isHTTPS,
       serviceWorker: 'serviceWorker' in navigator,
       userAgent: navigator.userAgent,
-      location: window.location.href
+      location: window.location.href,
+      protocol: location.protocol,
+      hostname: location.hostname
     });
 
     // PWA 설치 프롬프트 이벤트
@@ -939,9 +946,9 @@ const PWAInstallPrompt = () => {
     // 설치 지원 여부 설정
     setInstallSupported(isInstallSupported);
 
-    // 이미 설치되지 않았고, (모바일이거나 설치가 지원되면) 설치 안내 표시
-    if (!standalone && (isMobile || isInstallSupported)) {
-      console.log('Showing install prompt');
+    // 이미 설치되지 않았고, 모바일이면 설치 안내 표시 (조건 완화)
+    if (!standalone && isMobile) {
+      console.log('Showing install prompt for mobile device');
       setShowInstallPrompt(true);
     }
 
@@ -977,7 +984,7 @@ const PWAInstallPrompt = () => {
       }
     } else {
       console.log('No deferred prompt available');
-      alert('현재 브라우저에서는 PWA 설치를 지원하지 않습니다.\n\nChrome, Edge, Samsung Internet에서 시도해보세요.');
+      alert('PWA 설치 프롬프트를 사용할 수 없습니다.\n\n다음 방법을 시도해보세요:\n1. Chrome 메뉴 → "홈 화면에 추가"\n2. 주소창의 설치 아이콘 클릭\n3. 페이지를 새로고침 후 다시 시도');
     }
   };
 
@@ -1013,10 +1020,9 @@ const PWAInstallPrompt = () => {
           ) : (
             <button
               onClick={handleInstallClick}
-              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 text-sm font-medium disabled:opacity-50"
-              disabled={!deferredPrompt && !installSupported}
+              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 text-sm font-medium"
             >
-              {deferredPrompt ? '설치하기' : '지원 안됨'}
+              {deferredPrompt ? '설치하기' : '설치 시도'}
             </button>
           )}
           <button

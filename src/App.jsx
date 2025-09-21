@@ -129,14 +129,19 @@ const LearningGuide = ({ onClose }) => (
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="text-lg font-semibold text-blue-800 mb-3">🎯 체인 암기법이란?</h3>
             <p className="text-gray-700 leading-relaxed">
-              단어들을 연결고리로 묶어서 암기하는 방법입니다. 예를 들어:
+              영영 풀이 속에서 모르는 단어를 찾아 그 단어의 풀이를 또 찾아가는 방식으로, 
+              단어의 의미를 영어로 이해하면서 자연스럽게 어휘력을 늘리는 방법입니다.
             </p>
             <div className="mt-3 bg-white p-3 rounded border-l-4 border-blue-500">
-              <div className="font-mono text-sm">
-                <div>apple → 사과</div>
-                <div>apple → red → 빨간색</div>
-                <div>red → fire → 불</div>
-                <div>fire → hot → 뜨거운</div>
+              <div className="text-sm space-y-2">
+                <div className="font-semibold text-blue-700">예시:</div>
+                <div className="text-gray-700">
+                  <div><strong>apple</strong> → a round fruit that grows on trees</div>
+                  <div className="ml-4 text-gray-600">(fruit, tree가 모르면 →)</div>
+                  <div><strong>fruit</strong> → the sweet part of a plant that contains seeds</div>
+                  <div className="ml-4 text-gray-600">(plant, seed가 모르면 →)</div>
+                  <div><strong>plant</strong> → a living thing that grows in soil</div>
+                </div>
               </div>
             </div>
           </div>
@@ -149,18 +154,25 @@ const LearningGuide = ({ onClose }) => (
                 <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
                 <div>
                   <h4 className="font-semibold">단어 추가</h4>
-                  <p className="text-sm text-gray-600">새로운 단어를 추가하고 연결고리를 만드세요</p>
+                  <p className="text-sm text-gray-600">새로운 단어를 추가하고 영영 풀이를 입력하세요</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
                 <div>
-                  <h4 className="font-semibold">학습 모드</h4>
-                  <p className="text-sm text-gray-600">체인을 따라가며 단어를 암기하세요</p>
+                  <h4 className="font-semibold">체인 생성</h4>
+                  <p className="text-sm text-gray-600">영영 풀이 속 모르는 단어를 찾아 그 단어를 추가하세요</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                <div>
+                  <h4 className="font-semibold">학습 모드</h4>
+                  <p className="text-sm text-gray-600">체인을 따라가며 영영 풀이로 단어를 암기하세요</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
                 <div>
                   <h4 className="font-semibold">복습 모드</h4>
                   <p className="text-sm text-gray-600">무작위로 나오는 단어로 실력을 테스트하세요</p>
@@ -175,15 +187,19 @@ const LearningGuide = ({ onClose }) => (
             <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex items-start gap-2">
                 <span className="text-yellow-600">•</span>
-                <span>의미 있는 연결고리를 만드세요 (비슷한 의미, 반대 의미, 연상 등)</span>
+                <span>영영 풀이를 읽고 모르는 단어를 찾아 체인을 만들어보세요</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-600">•</span>
-                <span>하루에 10-20개 단어씩 꾸준히 학습하세요</span>
+                <span>한 번에 너무 많은 단어보다는 5-10개씩 꾸준히 학습하세요</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-600">•</span>
-                <span>음성 기능을 활용해 발음을 함께 기억하세요</span>
+                <span>음성 기능으로 발음을 듣고 따라해보세요</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>체인을 따라가며 단어의 의미를 영어로 이해하세요</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-600">•</span>
@@ -200,22 +216,25 @@ const LearningGuide = ({ onClose }) => (
           <div className="bg-purple-50 p-4 rounded-lg">
             <h3 className="text-lg font-semibold text-purple-800 mb-3">🔗 예시 체인</h3>
             <div className="bg-white p-4 rounded border">
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between items-center py-1 border-b border-gray-100">
-                  <span className="font-medium">cat</span>
-                  <span className="text-gray-600">고양이</span>
+              <div className="text-sm space-y-3">
+                <div className="border-b border-gray-200 pb-2">
+                  <div className="font-semibold text-purple-700 mb-1">1단계: apple</div>
+                  <div className="text-gray-600">a round fruit that grows on trees</div>
+                  <div className="text-xs text-gray-500 mt-1">→ fruit, tree가 모르면 다음 단계로</div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-gray-100">
-                  <span className="font-medium">cat → animal</span>
-                  <span className="text-gray-600">동물</span>
+                <div className="border-b border-gray-200 pb-2">
+                  <div className="font-semibold text-purple-700 mb-1">2단계: fruit</div>
+                  <div className="text-gray-600">the sweet part of a plant that contains seeds</div>
+                  <div className="text-xs text-gray-500 mt-1">→ plant, seed가 모르면 다음 단계로</div>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-gray-100">
-                  <span className="font-medium">animal → wild</span>
-                  <span className="text-gray-600">야생의</span>
+                <div className="border-b border-gray-200 pb-2">
+                  <div className="font-semibold text-purple-700 mb-1">3단계: plant</div>
+                  <div className="text-gray-600">a living thing that grows in soil</div>
+                  <div className="text-xs text-gray-500 mt-1">→ soil이 모르면 다음 단계로</div>
                 </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="font-medium">wild → forest</span>
-                  <span className="text-gray-600">숲</span>
+                <div>
+                  <div className="font-semibold text-purple-700 mb-1">4단계: soil</div>
+                  <div className="text-gray-600">the top layer of earth where plants grow</div>
                 </div>
               </div>
             </div>

@@ -444,9 +444,11 @@ const Review = ({ items, onUpdate }) => {
   );
 };
 
-const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange }) => {
+const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange, deviceId }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [newUserName, setNewUserName] = useState(userName);
+  const [showDeviceIdInput, setShowDeviceIdInput] = useState(false);
+  const [inputDeviceId, setInputDeviceId] = useState('');
 
   const handleClearData = async () => {
     if (showConfirm) {
@@ -463,12 +465,89 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
     }
   };
 
+  const copyDeviceId = () => {
+    navigator.clipboard.writeText(deviceId).then(() => {
+      alert('디바이스 ID가 복사되었습니다!');
+    });
+  };
+
+  const handleDeviceIdChange = async () => {
+    if (inputDeviceId.trim()) {
+      try {
+        await deviceAuth.setDeviceId(inputDeviceId.trim());
+        alert('디바이스 ID가 변경되었습니다. 페이지를 새로고침합니다.');
+        window.location.reload();
+      } catch (error) {
+        alert('디바이스 ID 변경에 실패했습니다: ' + error.message);
+      }
+    }
+  };
+
   return (
     <div className="pt-60 space-y-6">
       <div className="bg-white p-6 rounded-xl shadow">
         <h2 className="text-xl font-semibold mb-4">사용자 설정</h2>
         
         <div className="space-y-4">
+          {/* 디바이스 ID 공유 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              디바이스 ID (다른 기기에서 같은 데이터 사용)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={deviceId}
+                readOnly
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+              />
+              <button
+                onClick={copyDeviceId}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                복사
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              이 ID를 다른 기기에서 입력하면 같은 데이터를 사용할 수 있습니다.
+            </p>
+            
+            <div className="mt-3">
+              <button
+                onClick={() => setShowDeviceIdInput(!showDeviceIdInput)}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                {showDeviceIdInput ? '숨기기' : '다른 기기 ID 입력하기'}
+              </button>
+              
+              {showDeviceIdInput && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    다른 기기의 디바이스 ID 입력
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inputDeviceId}
+                      onChange={(e) => setInputDeviceId(e.target.value)}
+                      placeholder="디바이스 ID를 입력하세요"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                    />
+                    <button
+                      onClick={handleDeviceIdChange}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      적용
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    주의: 기존 데이터는 새 디바이스의 데이터로 덮어씌워집니다.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               사용자명

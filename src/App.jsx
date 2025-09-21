@@ -894,15 +894,44 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
 const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // iOS 감지
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    setIsIOS(iOS);
+
+    // 이미 설치된 앱인지 확인
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+    setIsStandalone(standalone);
+
+    // 모바일 감지
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    console.log('PWA Debug Info:', {
+      iOS,
+      standalone,
+      isMobile,
+      userAgent: navigator.userAgent
+    });
+
+    // PWA 설치 프롬프트 이벤트
     const handleBeforeInstallPrompt = (e) => {
+      console.log('beforeinstallprompt event triggered');
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // 이미 설치되지 않았고, 모바일이면 설치 안내 표시
+    if (!standalone && isMobile) {
+      console.log('Showing install prompt for mobile device');
+      setShowInstallPrompt(true);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -919,28 +948,41 @@ const PWAInstallPrompt = () => {
     }
   };
 
+  // 이미 설치된 앱이면 표시하지 않음
+  if (isStandalone) return null;
+
+  // 모바일이 아니면 표시하지 않음
+  if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return null;
+
   if (!showInstallPrompt) return null;
 
   return (
-    <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
+    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl mb-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="text-2xl">📱</div>
+          <div className="text-3xl">📱</div>
           <div>
-            <h3 className="font-semibold text-blue-800">앱으로 설치하기</h3>
-            <p className="text-sm text-blue-600">홈 화면에 추가하여 앱처럼 사용하세요!</p>
+            <h3 className="font-semibold text-lg">앱으로 설치하기</h3>
+            <p className="text-sm opacity-90">홈 화면에 추가하여 앱처럼 사용하세요!</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={handleInstallClick}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-          >
-            설치
-          </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {isIOS ? (
+            <div className="text-right">
+              <p className="text-xs opacity-75 mb-1">Safari에서</p>
+              <p className="text-xs opacity-75">공유 → 홈 화면에 추가</p>
+            </div>
+          ) : (
+            <button
+              onClick={handleInstallClick}
+              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 text-sm font-medium"
+            >
+              설치하기
+            </button>
+          )}
           <button
             onClick={() => setShowInstallPrompt(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
+            className="px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg hover:bg-opacity-30 text-sm"
           >
             나중에
           </button>
@@ -1225,3 +1267,4 @@ const App = () => {
 };
 
 export default App;
+

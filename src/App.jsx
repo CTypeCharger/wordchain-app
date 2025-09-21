@@ -109,6 +109,133 @@ const useLocalStorageStore = () => {
   };
 };
 
+// ===== 학습 가이드 컴포넌트 =====
+const LearningGuide = ({ onClose }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">📚 WordChain 학습 가이드</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          {/* 기본 개념 */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-800 mb-3">🎯 체인 암기법이란?</h3>
+            <p className="text-gray-700 leading-relaxed">
+              단어들을 연결고리로 묶어서 암기하는 방법입니다. 예를 들어:
+            </p>
+            <div className="mt-3 bg-white p-3 rounded border-l-4 border-blue-500">
+              <div className="font-mono text-sm">
+                <div>apple → 사과</div>
+                <div>apple → red → 빨간색</div>
+                <div>red → fire → 불</div>
+                <div>fire → hot → 뜨거운</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 학습 단계 */}
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-800 mb-3">📖 학습 단계</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+                <div>
+                  <h4 className="font-semibold">단어 추가</h4>
+                  <p className="text-sm text-gray-600">새로운 단어를 추가하고 연결고리를 만드세요</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+                <div>
+                  <h4 className="font-semibold">학습 모드</h4>
+                  <p className="text-sm text-gray-600">체인을 따라가며 단어를 암기하세요</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                <div>
+                  <h4 className="font-semibold">복습 모드</h4>
+                  <p className="text-sm text-gray-600">무작위로 나오는 단어로 실력을 테스트하세요</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 효과적인 학습 팁 */}
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-yellow-800 mb-3">💡 효과적인 학습 팁</h3>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>의미 있는 연결고리를 만드세요 (비슷한 의미, 반대 의미, 연상 등)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>하루에 10-20개 단어씩 꾸준히 학습하세요</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>음성 기능을 활용해 발음을 함께 기억하세요</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>복습 모드로 정기적으로 실력을 확인하세요</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                <span>JSON 백업으로 데이터를 안전하게 보관하세요</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 예시 체인 */}
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-purple-800 mb-3">🔗 예시 체인</h3>
+            <div className="bg-white p-4 rounded border">
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                  <span className="font-medium">cat</span>
+                  <span className="text-gray-600">고양이</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                  <span className="font-medium">cat → animal</span>
+                  <span className="text-gray-600">동물</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-gray-100">
+                  <span className="font-medium">animal → wild</span>
+                  <span className="text-gray-600">야생의</span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="font-medium">wild → forest</span>
+                  <span className="text-gray-600">숲</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 시작하기 버튼 */}
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={onClose}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+            >
+              시작하기 🚀
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // ===== 컴포넌트들 =====
 const TabButton = ({ active, onClick, children, className = "" }) => (
   <button
@@ -123,7 +250,7 @@ const TabButton = ({ active, onClick, children, className = "" }) => (
   </button>
 );
 
-const Dashboard = ({ items, settings }) => {
+const Dashboard = ({ items, settings, setShowLearningGuide }) => {
   const today = todayStr();
   
   const stats = useMemo(() => {
@@ -158,6 +285,22 @@ const Dashboard = ({ items, settings }) => {
             <div className="text-2xl md:text-3xl font-bold text-blue-300">{stats.mastered}</div>
             <div className="text-xs md:text-sm opacity-90">완료</div>
           </div>
+        </div>
+      </div>
+
+      {/* 학습 가이드 버튼 */}
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">📚 학습 방법이 궁금하신가요?</h3>
+            <p className="text-gray-600 text-sm">체인 암기법과 효과적인 학습 팁을 확인해보세요!</p>
+          </div>
+          <button
+            onClick={() => setShowLearningGuide(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full md:w-auto"
+          >
+            가이드 보기
+          </button>
         </div>
       </div>
 
@@ -1045,6 +1188,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showNameModal, setShowNameModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLearningGuide, setShowLearningGuide] = useState(false);
   
   const { 
     items, 
@@ -1284,7 +1428,7 @@ const App = () => {
 
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} />}
+        {activeTab === "dashboard" && <Dashboard items={items} settings={settings} setShowLearningGuide={setShowLearningGuide} />}
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
@@ -1309,6 +1453,19 @@ const App = () => {
           </p>
         </div>
       </footer>
+
+      {/* 모달들 */}
+      {showNameModal && (
+        <NameModal
+          userName={userName}
+          onSave={handleSaveUserName}
+          onClose={() => setShowNameModal(false)}
+        />
+      )}
+      
+      {showLearningGuide && (
+        <LearningGuide onClose={() => setShowLearningGuide(false)} />
+      )}
     </div>
   );
 };

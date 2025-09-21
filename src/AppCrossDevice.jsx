@@ -698,6 +698,7 @@ const App = () => {
             onClearData={() => {}}
             userName={userName}
             onUserNameChange={handleUserNameChange}
+            deviceId={deviceId}
           />
         )}
       </main>

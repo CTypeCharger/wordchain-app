@@ -896,6 +896,7 @@ const PWAInstallPrompt = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [installSupported, setInstallSupported] = useState(false);
 
   useEffect(() => {
     // iOS 감지
@@ -910,26 +911,37 @@ const PWAInstallPrompt = () => {
     // 모바일 감지
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+    // PWA 설치 지원 여부 확인
+    const isInstallSupported = 'serviceWorker' in navigator && 
+                              ('PushManager' in window || 'Notification' in window);
+
     console.log('PWA Debug Info:', {
       iOS,
       standalone,
       isMobile,
-      userAgent: navigator.userAgent
+      isInstallSupported,
+      serviceWorker: 'serviceWorker' in navigator,
+      userAgent: navigator.userAgent,
+      location: window.location.href
     });
 
     // PWA 설치 프롬프트 이벤트
     const handleBeforeInstallPrompt = (e) => {
-      console.log('beforeinstallprompt event triggered');
+      console.log('beforeinstallprompt event triggered', e);
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallPrompt(true);
+      setInstallSupported(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // 이미 설치되지 않았고, 모바일이면 설치 안내 표시
-    if (!standalone && isMobile) {
-      console.log('Showing install prompt for mobile device');
+    // 설치 지원 여부 설정
+    setInstallSupported(isInstallSupported);
+
+    // 이미 설치되지 않았고, (모바일이거나 설치가 지원되면) 설치 안내 표시
+    if (!standalone && (isMobile || isInstallSupported)) {
+      console.log('Showing install prompt');
       setShowInstallPrompt(true);
     }
 
@@ -939,20 +951,41 @@ const PWAInstallPrompt = () => {
   }, []);
 
   const handleInstallClick = async () => {
+    console.log('Install button clicked, deferredPrompt:', deferredPrompt);
+    
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
-      setDeferredPrompt(null);
-      setShowInstallPrompt(false);
+      try {
+        // 사용자에게 설치 프롬프트 표시
+        deferredPrompt.prompt();
+        
+        // 사용자 선택 결과 기다리기
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        
+        // 프롬프트 사용 후 정리
+        setDeferredPrompt(null);
+        setShowInstallPrompt(false);
+      } catch (error) {
+        console.error('Error during install prompt:', error);
+        alert('설치 중 오류가 발생했습니다. 브라우저를 새로고침해주세요.');
+      }
+    } else {
+      console.log('No deferred prompt available');
+      alert('현재 브라우저에서는 PWA 설치를 지원하지 않습니다.\n\nChrome, Edge, Samsung Internet에서 시도해보세요.');
     }
   };
 
   // 이미 설치된 앱이면 표시하지 않음
-  if (isStandalone) return null;
-
-  // 모바일이 아니면 표시하지 않음
-  if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return null;
+  if (isStandalone) {
+    console.log('App is already installed, hiding prompt');
+    return null;
+  }
 
   if (!showInstallPrompt) return null;
 
@@ -964,6 +997,11 @@ const PWAInstallPrompt = () => {
           <div>
             <h3 className="font-semibold text-lg">앱으로 설치하기</h3>
             <p className="text-sm opacity-90">홈 화면에 추가하여 앱처럼 사용하세요!</p>
+            {!installSupported && (
+              <p className="text-xs opacity-75 mt-1">
+                Chrome, Edge, Samsung Internet에서 사용 가능
+              </p>
+            )}
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -975,9 +1013,10 @@ const PWAInstallPrompt = () => {
           ) : (
             <button
               onClick={handleInstallClick}
-              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 text-sm font-medium"
+              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-100 text-sm font-medium disabled:opacity-50"
+              disabled={!deferredPrompt && !installSupported}
             >
-              설치하기
+              {deferredPrompt ? '설치하기' : '지원 안됨'}
             </button>
           )}
           <button

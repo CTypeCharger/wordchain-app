@@ -17,6 +17,30 @@ const addDays = (d, n) => {
 };
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+// ===== 발음 기능 =====
+const speakText = (text, lang = 'en-US') => {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 0.8; // 조금 느리게
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // 영어 음성으로 설정
+    const voices = speechSynthesis.getVoices();
+    const englishVoice = voices.find(voice => 
+      voice.lang.startsWith('en') && voice.name.includes('English')
+    );
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+    
+    speechSynthesis.speak(utterance);
+  } else {
+    alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+  }
+};
+
 // ===== 범기기 사용자 데이터 관리 =====
 const useCrossDeviceStore = () => {
   const [items, setItems] = useState([]);
@@ -236,14 +260,28 @@ const AddWord = ({ onAdd }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               영어 단어
             </label>
-            <input
-              type="text"
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              placeholder="단어를 입력하세요"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={loading}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                placeholder="단어를 입력하세요"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={loading}
+              />
+              {word.trim() && (
+                <button
+                  type="button"
+                  onClick={() => speakText(word.trim())}
+                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  disabled={loading}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           <button
             type="submit"
@@ -333,9 +371,21 @@ const Study = ({ items, settings, onUpdate }) => {
             {currentItem.word}
           </h2>
           {currentItem.pronunciation && (
-            <p className="text-lg text-gray-600 mb-4">
-              {currentItem.pronunciation}
-            </p>
+            <div className="mb-4">
+              <p 
+                className="text-lg text-gray-600 mb-2 pronunciation-display"
+                dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+              />
+              <button
+                onClick={() => speakText(currentItem.word)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                </svg>
+                발음 듣기
+              </button>
+            </div>
           )}
         </div>
 
@@ -353,6 +403,23 @@ const Study = ({ items, settings, onUpdate }) => {
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">정의:</h3>
               <p className="text-gray-700">{currentItem.definition}</p>
+              {currentItem.pronunciation && (
+                <div className="mt-2">
+                  <p 
+                    className="text-sm text-gray-600 mb-2 pronunciation-display"
+                    dangerouslySetInnerHTML={{ __html: currentItem.pronunciation }}
+                  />
+                  <button
+                    onClick={() => speakText(currentItem.word)}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition-colors"
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                    </svg>
+                    발음 듣기
+                  </button>
+                </div>
+              )}
               {currentItem.partOfSpeech && (
                 <p className="text-sm text-gray-500 mt-2">
                   ({currentItem.partOfSpeech})
@@ -374,6 +441,194 @@ const Study = ({ items, settings, onUpdate }) => {
                 맞았어요
               </button>
             </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const WordList = ({ items, onUpdate }) => {
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.definition.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    switch (filter) {
+      case 'new':
+        return item.status === 'new' && matchesSearch;
+      case 'learning':
+        return item.status === 'learning' && matchesSearch;
+      case 'mastered':
+        return item.status === 'mastered' && matchesSearch;
+      case 'due':
+        return item.dueDate === todayStr() && matchesSearch;
+      default:
+        return matchesSearch;
+    }
+  });
+
+  const handleDeleteWord = (wordId) => {
+    if (window.confirm('이 단어를 삭제하시겠습니까?')) {
+      const updatedItems = items.filter(item => item.id !== wordId);
+      onUpdate(updatedItems);
+    }
+  };
+
+  const handleStatusChange = (wordId, newStatus) => {
+    const updatedItems = items.map(item => 
+      item.id === wordId ? { ...item, status: newStatus } : item
+    );
+    onUpdate(updatedItems);
+  };
+
+  return (
+    <div className="pt-60 space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h2 className="text-xl font-semibold mb-4">전체 단어 목록 ({items.length}개)</h2>
+        
+        {/* 검색 및 필터 */}
+        <div className="space-y-4 mb-6">
+          <div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="단어나 정의로 검색..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'all' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              전체 ({items.length})
+            </button>
+            <button
+              onClick={() => setFilter('new')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'new' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              새 단어 ({items.filter(item => item.status === 'new').length})
+            </button>
+            <button
+              onClick={() => setFilter('learning')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'learning' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              학습 중 ({items.filter(item => item.status === 'learning').length})
+            </button>
+            <button
+              onClick={() => setFilter('mastered')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'mastered' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              완료 ({items.filter(item => item.status === 'mastered').length})
+            </button>
+            <button
+              onClick={() => setFilter('due')}
+              className={`px-3 py-1 rounded-full text-sm ${
+                filter === 'due' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              오늘 복습 ({items.filter(item => item.dueDate === todayStr()).length})
+            </button>
+          </div>
+        </div>
+
+        {/* 단어 목록 */}
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {searchTerm ? '검색 결과가 없습니다.' : '등록된 단어가 없습니다.'}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredItems.map(item => (
+              <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{item.word}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        item.status === 'new' ? 'bg-blue-100 text-blue-700' :
+                        item.status === 'learning' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {item.status === 'new' ? '새 단어' :
+                         item.status === 'learning' ? '학습 중' : '완료'}
+                      </span>
+                    </div>
+                    
+                    {item.pronunciation && (
+                      <div className="mb-2">
+                        <p 
+                          className="text-gray-600 mb-1 pronunciation-display"
+                          dangerouslySetInnerHTML={{ __html: item.pronunciation }}
+                        />
+                        <button
+                          onClick={() => speakText(item.word)}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                          </svg>
+                          발음
+                        </button>
+                      </div>
+                    )}
+                    
+                    <p className="text-gray-700 mb-2">{item.definition}</p>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      {item.partOfSpeech && (
+                        <span>({item.partOfSpeech})</span>
+                      )}
+                      <span>추가일: {item.addedDate}</span>
+                      <span>복습일: {item.dueDate}</span>
+                      <span>복습 횟수: {item.reviewCount}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 ml-4">
+                    <select
+                      value={item.status}
+                      onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                      className="text-xs px-2 py-1 border border-gray-300 rounded"
+                    >
+                      <option value="new">새 단어</option>
+                      <option value="learning">학습 중</option>
+                      <option value="mastered">완료</option>
+                    </select>
+                    
+                    <button
+                      onClick={() => handleDeleteWord(item.id)}
+                      className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -407,7 +662,21 @@ const Review = ({ items, onUpdate }) => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{item.word}</h3>
                   {item.pronunciation && (
-                    <p className="text-gray-600">{item.pronunciation}</p>
+                    <div className="mb-2">
+                      <p 
+                        className="text-gray-600 pronunciation-display"
+                        dangerouslySetInnerHTML={{ __html: item.pronunciation }}
+                      />
+                      <button
+                        onClick={() => speakText(item.word)}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition-colors mt-1"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4-4.816A1 1 0 019.383 3.076zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                        </svg>
+                        발음
+                      </button>
+                    </div>
                   )}
                   <p className="text-gray-700 mt-2">{item.definition}</p>
                 </div>
@@ -747,6 +1016,12 @@ const App = () => {
                   리뷰
                 </TabButton>
                 <TabButton
+                  active={activeTab === "words"}
+                  onClick={() => setActiveTab("words")}
+                >
+                  단어목록
+                </TabButton>
+                <TabButton
                   active={activeTab === "settings"}
                   onClick={() => setActiveTab("settings")}
                 >
@@ -770,6 +1045,7 @@ const App = () => {
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
         {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
+        {activeTab === "words" && <WordList items={items} onUpdate={handleUpdateItems} />}
         {activeTab === "settings" && (
           <Settings 
             settings={settings} 

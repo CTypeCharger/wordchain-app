@@ -35,30 +35,42 @@ export class DeviceAuth {
     return deviceId;
   }
 
-  // 디바이스 지문 생성
+  // 디바이스 지문 생성 (더 안정적인 방식)
   generateDeviceFingerprint() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Device fingerprint', 2, 2);
-    
+    // 기본적인 정보만 사용하여 더 안정적인 지문 생성
     const fingerprint = [
-      navigator.userAgent,
       navigator.language,
-      screen.width + 'x' + screen.height,
       new Date().getTimezoneOffset(),
       navigator.platform,
       navigator.hardwareConcurrency || 'unknown',
-      navigator.maxTouchPoints || 0,
-      canvas.toDataURL(),
-      // 추가 고유 정보
       Intl.DateTimeFormat().resolvedOptions().timeZone,
-      navigator.cookieEnabled,
-      navigator.doNotTrack || 'unknown'
+      navigator.cookieEnabled ? '1' : '0',
+      // 사용자 에이전트의 기본 정보만 (브라우저 종류)
+      this.getBrowserInfo(),
+      // 화면 해상도는 범위로 처리
+      this.getScreenSizeCategory()
     ].join('|');
     
     return this.hashString(fingerprint);
+  }
+
+  // 브라우저 정보 추출 (안정적인 부분만)
+  getBrowserInfo() {
+    const ua = navigator.userAgent;
+    if (ua.includes('Chrome')) return 'Chrome';
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('Safari')) return 'Safari';
+    if (ua.includes('Edge')) return 'Edge';
+    return 'Other';
+  }
+
+  // 화면 크기 카테고리
+  getScreenSizeCategory() {
+    const width = screen.width;
+    if (width < 768) return 'mobile';
+    if (width < 1024) return 'tablet';
+    if (width < 1440) return 'laptop';
+    return 'desktop';
   }
 
   // 문자열 해시 생성
@@ -90,7 +102,15 @@ export class DeviceAuth {
     if (!deviceId || deviceId.trim() === '') {
       throw new Error('유효한 디바이스 ID를 입력해주세요.');
     }
-    localStorage.setItem(this.DEVICE_ID_KEY, deviceId.trim());
+    
+    // 디바이스 ID 형식 검증
+    const cleanId = deviceId.trim();
+    if (!cleanId.startsWith('device_')) {
+      throw new Error('올바른 디바이스 ID 형식이 아닙니다. (device_로 시작해야 함)');
+    }
+    
+    localStorage.setItem(this.DEVICE_ID_KEY, cleanId);
+    console.log('디바이스 ID가 변경되었습니다:', cleanId);
     return true;
   }
 
@@ -121,19 +141,21 @@ export class DeviceAuth {
   async loadUserData() {
     try {
       const deviceId = this.getDeviceId();
+      console.log('데이터 로드 시도:', deviceId);
+      
       const userRef = doc(db, 'anonymous_users', deviceId);
       const userSnap = await getDoc(userRef);
       
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        console.log('데이터 로드 완료:', deviceId);
+        console.log('데이터 로드 완료:', deviceId, '사용자명:', userData.userName);
         return {
           items: userData.data?.items || [],
           settings: userData.data?.settings || { hideMeaningsByDefault: true },
           userName: userData.userName || '익명 사용자'
         };
       } else {
-        console.log('새 사용자 데이터 생성');
+        console.log('새 사용자 데이터 생성 (디바이스 ID:', deviceId, ')');
         return {
           items: [],
           settings: { hideMeaningsByDefault: true },
@@ -142,6 +164,10 @@ export class DeviceAuth {
       }
     } catch (error) {
       console.error('데이터 로드 실패:', error);
+      // 네트워크 오류인 경우 사용자에게 알림
+      if (error.code === 'unavailable') {
+        console.warn('Firebase 서비스가 일시적으로 사용할 수 없습니다. 오프라인 모드로 전환합니다.');
+      }
       return {
         items: [],
         settings: { hideMeaningsByDefault: true },

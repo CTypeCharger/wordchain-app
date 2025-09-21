@@ -89,6 +89,11 @@ const useCrossDeviceStore = () => {
     }
   };
 
+  // 디바이스 ID 변경 후 데이터 다시 로드
+  const reloadData = async () => {
+    await loadUserData();
+  };
+
   // 초기 로드
   useEffect(() => {
     loadUserData();
@@ -103,7 +108,8 @@ const useCrossDeviceStore = () => {
     setUserName,
     loading, 
     saveData,
-    deviceId
+    deviceId,
+    reloadData
   };
 };
 
@@ -713,7 +719,7 @@ const Review = ({ items, onUpdate }) => {
   );
 };
 
-const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange, deviceId }) => {
+const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNameChange, deviceId, onReloadData }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [newUserName, setNewUserName] = useState(userName);
   const [showDeviceIdInput, setShowDeviceIdInput] = useState(false);
@@ -743,10 +749,22 @@ const Settings = ({ settings, onSettingsChange, onClearData, userName, onUserNam
   const handleDeviceIdChange = async () => {
     if (inputDeviceId.trim()) {
       try {
+        console.log('디바이스 ID 변경 시도:', inputDeviceId.trim());
         await deviceAuth.setDeviceId(inputDeviceId.trim());
-        alert('디바이스 ID가 변경되었습니다. 페이지를 새로고침합니다.');
-        window.location.reload();
+        console.log('디바이스 ID 변경 완료, 데이터 다시 로드 시작');
+        
+        alert('디바이스 ID가 변경되었습니다. 데이터를 다시 로드합니다.');
+        
+        // 데이터 다시 로드
+        if (onReloadData) {
+          await onReloadData();
+          console.log('데이터 다시 로드 완료');
+        }
+        
+        setInputDeviceId(''); // 입력 필드 초기화
+        setShowDeviceIdInput(false); // 입력 폼 숨기기
       } catch (error) {
+        console.error('디바이스 ID 변경 실패:', error);
         alert('디바이스 ID 변경에 실패했습니다: ' + error.message);
       }
     }
@@ -896,7 +914,8 @@ const App = () => {
     setUserName,
     loading, 
     saveData,
-    deviceId
+    deviceId,
+    reloadData
   } = useCrossDeviceStore();
 
   // 사용자명 설정
@@ -1054,6 +1073,7 @@ const App = () => {
             userName={userName}
             onUserNameChange={handleUserNameChange}
             deviceId={deviceId}
+            onReloadData={reloadData}
           />
         )}
       </main>

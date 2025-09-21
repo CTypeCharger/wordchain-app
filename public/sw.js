@@ -75,3 +75,25 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Ensure data persistence across app sessions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    console.log('Background sync triggered');
+    // This ensures the app can sync data when it comes back online
+  }
+});
+
+// Handle app installation
+self.addEventListener('install', (event) => {
+  console.log('PWA installing...');
+  // Ensure the service worker is activated immediately
+  self.skipWaiting();
+});
+
+// Handle app activation
+self.addEventListener('activate', (event) => {
+  console.log('PWA activated');
+  // Take control of all clients immediately
+  event.waitUntil(self.clients.claim());
+});

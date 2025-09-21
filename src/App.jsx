@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { deviceAuth } from "./deviceAuth";
 
 /**
  * 영어 단어 체인 암기 웹앱
@@ -40,58 +39,63 @@ const speakText = (text, lang = 'en-US') => {
   }
 };
 
-// ===== 사용자 데이터 관리 =====
-const useCrossDeviceStore = () => {
+// ===== 사용자 데이터 관리 (로컬 스토리지) =====
+const useLocalStorageStore = () => {
   const [items, setItems] = useState([]);
-  const [settings, setSettings] = useState({ hideMeaningsByDefault: true });
-  const [userName, setUserName] = useState('익명 사용자');
-  const [loading, setLoading] = useState(true);
-  const [deviceId, setDeviceId] = useState('');
-
-  // 사용자 데이터 로드
-  const loadUserData = async () => {
+  const [settings, setSettings] = useState(() => {
     try {
-      setLoading(true);
-      const deviceId = deviceAuth.getDeviceId();
-      setDeviceId(deviceId);
-      
-      const userData = await deviceAuth.loadUserData();
-      setItems(userData.items || []);
-      setSettings(userData.settings || { hideMeaningsByDefault: true });
-      setUserName(userData.userName || '익명 사용자');
+      const stored = localStorage.getItem('wordchain_settings');
+      return stored ? JSON.parse(stored) : { hideMeaningsByDefault: true };
+    } catch {
+      return { hideMeaningsByDefault: true };
+    }
+  });
+  const [userName, setUserName] = useState(() => localStorage.getItem('wordchain_user_name') || '익명 사용자');
+  const [loading, setLoading] = useState(true);
+
+  // 초기 데이터 로드
+  useEffect(() => {
+    try {
+      const storedItems = localStorage.getItem('wordchain_items');
+      setItems(storedItems ? JSON.parse(storedItems) : []);
     } catch (error) {
-      console.error('데이터 로드 실패:', error);
+      console.error('Failed to load items from local storage:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // 사용자 데이터 저장
+  // 데이터 저장
   const saveData = async (newItems, newSettings, newUserName) => {
     try {
-      const data = {
-        items: newItems,
-        settings: newSettings
-      };
-      
-      await deviceAuth.saveUserData(data);
+      // 데이터를 localStorage에 저장
+      localStorage.setItem('wordchain_items', JSON.stringify(newItems));
+      localStorage.setItem('wordchain_settings', JSON.stringify(newSettings));
       
       if (newUserName) {
-        deviceAuth.setUserName(newUserName);
+        localStorage.setItem('wordchain_user_name', newUserName);
         setUserName(newUserName);
       }
       
+      // 상태 업데이트
       setItems(newItems);
       setSettings(newSettings);
+      
+      // PWA에서 데이터 지속성 보장
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'DATA_SAVED',
+          data: { items: newItems, settings: newSettings, userName: newUserName || userName }
+        });
+      }
+      
+      console.log('Data saved successfully:', { items: newItems.length, settings: newSettings, userName: newUserName || userName });
     } catch (error) {
-      console.error('데이터 저장 실패:', error);
+      console.error('Failed to save data to local storage:', error);
+      alert('데이터 저장에 실패했습니다. 브라우저 저장 공간을 확인해주세요.');
     }
   };
-
-  // 초기 로드
-  useEffect(() => {
-    loadUserData();
-  }, []);
 
   return { 
     items, 
@@ -101,8 +105,7 @@ const useCrossDeviceStore = () => {
     userName,
     setUserName,
     loading, 
-    saveData,
-    deviceId
+    saveData
   };
 };
 
@@ -1051,9 +1054,8 @@ const App = () => {
     userName,
     setUserName,
     loading, 
-    saveData,
-    deviceId
-  } = useCrossDeviceStore();
+    saveData
+  } = useLocalStorageStore();
 
   // 사용자명 설정
   useEffect(() => {

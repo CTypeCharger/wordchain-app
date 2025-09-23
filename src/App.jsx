@@ -44,7 +44,7 @@ const getWordImage = async (word) => {
   try {
     // Unsplash API를 사용하여 단어와 관련된 이미지 가져오기
     // 실제 사용 시에는 환경변수나 설정에서 API 키를 가져와야 합니다
-    const unsplashKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY || 'YOUR_UNSPLASH_ACCESS_KEY';
+    const unsplashKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY || '5Aq-5i4U8HT_iqM6DIc621YmS0gm3Fn-JGx3yRQFLi8';
     
     if (unsplashKey === 'YOUR_UNSPLASH_ACCESS_KEY') {
       // API 키가 없으면 기본 이미지 반환

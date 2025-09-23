@@ -39,32 +39,6 @@ const speakText = (text, lang = 'en-US') => {
   }
 };
 
-// ===== 이미지 관련 함수 =====
-const getWordImage = async (word) => {
-  try {
-    // Unsplash API를 사용하여 단어와 관련된 이미지 가져오기
-    // 실제 사용 시에는 환경변수나 설정에서 API 키를 가져와야 합니다
-    const unsplashKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY || '5Aq-5i4U8HT_iqM6DIc621YmS0gm3Fn-JGx3yRQFLi8';
-    
-    if (unsplashKey === 'YOUR_UNSPLASH_ACCESS_KEY') {
-      // API 키가 없으면 기본 이미지 반환
-      return `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(word)}`;
-    }
-    
-    const response = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(word)}&per_page=1&client_id=${unsplashKey}`);
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      return data.results[0].urls.small;
-    }
-  } catch (error) {
-    console.log('이미지 로드 실패:', error);
-  }
-  
-  // 이미지 로드 실패 시 기본 이미지 반환
-  return `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(word)}`;
-};
-
 // ===== 사용자 데이터 관리 (로컬 스토리지) =====
 const useLocalStorageStore = () => {
   const [items, setItems] = useState([]);
@@ -78,14 +52,6 @@ const useLocalStorageStore = () => {
   });
   const [userName, setUserName] = useState(() => localStorage.getItem('wordchain_user_name') || '익명 사용자');
   const [loading, setLoading] = useState(true);
-  const [imageCache, setImageCache] = useState(() => {
-    try {
-      const stored = localStorage.getItem('wordchain_image_cache');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -99,24 +65,6 @@ const useLocalStorageStore = () => {
       setLoading(false);
     }
   }, []);
-
-  // 이미지 캐시에 이미지 저장
-  const cacheImage = (word, imageUrl) => {
-    const newCache = { ...imageCache, [word]: imageUrl };
-    setImageCache(newCache);
-    localStorage.setItem('wordchain_image_cache', JSON.stringify(newCache));
-  };
-
-  // 단어 이미지 가져오기 (캐시 우선)
-  const getCachedImage = async (word) => {
-    if (imageCache[word]) {
-      return imageCache[word];
-    }
-    
-    const imageUrl = await getWordImage(word);
-    cacheImage(word, imageUrl);
-    return imageUrl;
-  };
 
   // 데이터 저장
   const saveData = async (newItems, newSettings, newUserName) => {
@@ -157,9 +105,7 @@ const useLocalStorageStore = () => {
     userName,
     setUserName,
     loading, 
-    saveData,
-    getCachedImage,
-    imageCache
+    saveData
   };
 };
 
@@ -512,10 +458,9 @@ const AddWord = ({ onAdd }) => {
   );
 };
 
-const Study = ({ items, settings, onUpdate, getCachedImage }) => {
+const Study = ({ items, settings, onUpdate }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [currentImage, setCurrentImage] = useState(null);
 
   const studyItems = items.filter(item => 
     item.status === 'new' || item.status === 'learning' || item.dueDate === todayStr()
@@ -531,13 +476,6 @@ const Study = ({ items, settings, onUpdate, getCachedImage }) => {
   }
 
   const currentItem = studyItems[currentIndex];
-
-  // 현재 단어의 이미지 로드
-  useEffect(() => {
-    if (currentItem) {
-      getCachedImage(currentItem.word).then(setCurrentImage);
-    }
-  }, [currentItem, getCachedImage]);
 
   const handleAnswer = (isCorrect) => {
     const updatedItems = items.map(item => {
@@ -591,26 +529,6 @@ const Study = ({ items, settings, onUpdate, getCachedImage }) => {
         </div>
         
         <div className="text-center mb-6">
-          {/* 단어 이미지 */}
-          <div className="mb-6 flex justify-center">
-            <div className="w-48 h-48 md:w-64 md:h-64 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center shadow-lg">
-              {currentImage ? (
-                <img 
-                  src={currentImage} 
-                  alt={currentItem.word}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(currentItem.word)}`;
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-4xl">
-                  {currentItem.word.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
-          
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
             {currentItem.word}
           </h2>
@@ -692,10 +610,9 @@ const Study = ({ items, settings, onUpdate, getCachedImage }) => {
   );
 };
 
-const WordList = ({ items, onUpdate, getCachedImage }) => {
+const WordList = ({ items, onUpdate }) => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [wordImages, setWordImages] = useState({});
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -728,21 +645,6 @@ const WordList = ({ items, onUpdate, getCachedImage }) => {
     );
     onUpdate(updatedItems);
   };
-
-  // 이미지 로드
-  useEffect(() => {
-    const loadImages = async () => {
-      const imagePromises = filteredItems.map(async (item) => {
-        if (!wordImages[item.word]) {
-          const imageUrl = await getCachedImage(item.word);
-          setWordImages(prev => ({ ...prev, [item.word]: imageUrl }));
-        }
-      });
-      await Promise.all(imagePromises);
-    };
-    
-    loadImages();
-  }, [filteredItems, getCachedImage]);
 
   return (
     <div className="pt-4 md:pt-60 space-y-6">
@@ -824,42 +726,19 @@ const WordList = ({ items, onUpdate, getCachedImage }) => {
           <div className="space-y-3">
             {filteredItems.map(item => (
               <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                <div className="flex gap-4">
-                  {/* 이미지 섹션 */}
-                  <div className="flex-shrink-0">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-                      {wordImages[item.word] ? (
-                        <img 
-                          src={wordImages[item.word]} 
-                          alt={item.word}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = `https://via.placeholder.com/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(item.word)}`;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                          {item.word.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* 단어 정보 섹션 */}
+                <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{item.word}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            item.status === 'new' ? 'bg-blue-100 text-blue-700' :
-                            item.status === 'learning' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-green-100 text-green-700'
-                          }`}>
-                            {item.status === 'new' ? '새 단어' :
-                             item.status === 'learning' ? '학습 중' : '완료'}
-                          </span>
-                        </div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold text-lg">{item.word}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        item.status === 'new' ? 'bg-blue-100 text-blue-700' :
+                        item.status === 'learning' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {item.status === 'new' ? '새 단어' :
+                         item.status === 'learning' ? '학습 중' : '완료'}
+                      </span>
+                    </div>
                     
                     {item.pronunciation && (
                       <div className="mb-2">
@@ -909,13 +788,11 @@ const WordList = ({ items, onUpdate, getCachedImage }) => {
                       삭제
                     </button>
                   </div>
-                    </div>
-                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1340,9 +1217,7 @@ const App = () => {
     userName,
     setUserName,
     loading, 
-    saveData,
-    getCachedImage,
-    imageCache
+    saveData
   } = useLocalStorageStore();
 
   // 사용자명 설정
@@ -1574,9 +1449,9 @@ const App = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
         {activeTab === "dashboard" && <Dashboard items={items} settings={settings} setShowLearningGuide={setShowLearningGuide} />}
         {activeTab === "add" && <AddWord onAdd={handleAddWord} />}
-        {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} getCachedImage={getCachedImage} />}
+        {activeTab === "study" && <Study items={items} settings={settings} onUpdate={handleUpdateItems} />}
         {activeTab === "review" && <Review items={items} onUpdate={handleUpdateItems} />}
-        {activeTab === "words" && <WordList items={items} onUpdate={handleUpdateItems} getCachedImage={getCachedImage} />}
+        {activeTab === "words" && <WordList items={items} onUpdate={handleUpdateItems} />}
         {activeTab === "settings" && (
           <Settings 
             settings={settings} 

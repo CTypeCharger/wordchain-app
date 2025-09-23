@@ -424,7 +424,12 @@ const AddWord = ({ onAdd }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/scrape-dictionary', {
+      // 프로덕션에서는 절대 경로, 개발에서는 상대 경로 사용
+      const apiUrl = import.meta.env.PROD 
+        ? 'https://engilsh-word-study-8v9uiq6ib-ascertains-projects.vercel.app/api/scrape-dictionary'
+        : '/api/scrape-dictionary';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ word: word.trim() })
